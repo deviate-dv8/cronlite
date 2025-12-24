@@ -1,0 +1,26 @@
+{
+  "name": "cronlite",
+  "version": "1.0.0",
+  "description": "cron-job.org alternative project",
+  "homepage": "https://github.com/deviate-dv8/cronlite#readme",
+  "bugs": {
+    "url": "https://github.com/deviate-dv8/cronlite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deviate-dv8/cronlite.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && npm run start:dev",
+    "fullstack": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
