@@ -20,6 +20,7 @@ export class PostgresConfigService implements TypeOrmOptionsFactory {
       ssl: this.configService.get<boolean>('DB_SSL') || false,
       entities: [__dirname + '/../database/entities/*{.ts,.js}'],
       migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
+      migrationsRun: this.configService.get<boolean>('DB_MIGRATIONS_RUN'),
     };
   }
 }
