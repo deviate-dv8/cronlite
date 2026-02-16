@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
@@ -27,19 +31,27 @@ export class UsersService {
     return this.users.save(newUser);
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll() {
+    return this.users.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: string) {
+    const userExist = await this.users.findOneBy({ id });
+    if (!userExist) {
+      throw new NotFoundException('User with this id does not exist');
+    }
+    return this.users.findOneBy({ id });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  update(id: string, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    const userExist = await this.users.findOneBy({ id });
+    if (!userExist) {
+      throw new ConflictException('User with this id does not exist');
+    }
+    return this.users.delete({ id });
   }
 }

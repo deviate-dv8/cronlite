@@ -21,6 +21,7 @@
     "fullstack": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "dependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "pm2": "^6.0.14"
   }
 }
