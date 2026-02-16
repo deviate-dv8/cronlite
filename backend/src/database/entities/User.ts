@@ -18,6 +18,9 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
   @OneToMany(() => Cronjob, (cronjob) => cronjob.user)
   cronjobs: Cronjob[];
 
