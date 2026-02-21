@@ -24,5 +24,5 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => (value === 'true' ? true : false)) // Added this to support urlencoded
-  isEmailVerified: boolean | undefined;
+  isEmailVerified?: boolean | undefined;
 }

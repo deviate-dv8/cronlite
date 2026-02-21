@@ -28,7 +28,9 @@ export class UsersService {
       ...createUserDto,
       password: hashedPassword,
     });
-    return this.users.save(newUser);
+    const savedUser = await this.users.save(newUser);
+    const { password, ...result } = savedUser;
+    return result;
   }
 
   async findAll() {
