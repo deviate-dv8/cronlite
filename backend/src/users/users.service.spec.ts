@@ -94,7 +94,6 @@ describe('UsersService', () => {
     await expect(service.create(newUser)).rejects.toThrow(ConflictException);
   });
   it('findAll - should return an array of users', async () => {
-    jest.spyOn(users, 'find').mockResolvedValue(mockUsersDB);
     mockUsers.find.mockResolvedValue(mockUsersDB);
     const result = await service.findAll();
     expect(result).toEqual(mockUsersDB);
