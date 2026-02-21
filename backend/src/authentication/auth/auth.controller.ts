@@ -18,9 +18,8 @@ export class AuthController {
   }
 
   @Post('signup')
-  signup(@Body() signupDto: SignUpDto) {
-    // Signup logic to be implemented
-    return { message: 'Signup endpoint is not yet implemented.' };
+  async signup(@Body() signupDto: SignUpDto) {
+    return this.authService.signup(signupDto);
   }
 
   // @Post('logout')

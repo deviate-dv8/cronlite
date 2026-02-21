@@ -4,14 +4,12 @@ import argon2 from 'argon2';
 import { Strategy } from 'passport-local';
 import { User } from 'src/database/entities/User';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    private readonly configService: ConfigService,
   ) {
     super({
       usernameField: 'email',
@@ -26,11 +24,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       select: { id: true, email: true },
     });
     if (!user) {
-      return null;
+      throw new UnauthorizedException('Invalid Email or Password');
     }
     const isPasswordValid = await argon2.verify(user.password, password);
     if (!isPasswordValid) {
-      return null;
+      throw new UnauthorizedException('Invalid Email or Password');
     }
     return user;
   }

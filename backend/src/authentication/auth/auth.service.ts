@@ -1,16 +1,19 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { User } from 'src/database/entities/User';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { SignUpDto } from './dto/sign-up.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UsersService } from 'src/users/users.service';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(User) private readonly users: Repository<User>,
+    private readonly userService: UsersService,
   ) {}
   login(user: Pick<User, 'id' | 'email'>) {
     const payload = { sub: user.id, email: user.email };
@@ -28,14 +31,11 @@ export class AuthService {
   }
 
   async signup(signUpDto: SignUpDto) {
-    const userExist = await this.users.findOneBy({ email: signUpDto.email });
-    if (userExist) {
-      throw new ConflictException('User with this email already exists');
-    }
-    // TODO: mailers later
-    const newUser = this.users.create({
-      ...signUpDto,
-    });
+    // Avoids passing confirmPassword to the user service since it is only used for validation in the controller
+    const { confirmPassword: _confimPassword, ...parsedSignUpDto } = signUpDto;
+    const newUser = await this.userService.create(
+      parsedSignUpDto as CreateUserDto,
+    );
     return newUser;
   }
 }

@@ -1,15 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { LocalStrategy } from '../strategies/local/local.strategy';
-import { JwtStrategy } from '../strategies/jwt/jwt.strategy';
-import { DatabaseModule } from 'src/database/database.module';
-import { AppConfigModule } from 'src/config/appConfig.module';
-import { Repository } from 'typeorm';
 import { User } from 'src/database/entities/User';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SignUpDto } from './dto/sign-up.dto';
-
+import { UsersService } from 'src/users/users.service';
+import { mockDeep } from 'jest-mock-extended';
+import { ConfigService } from '@nestjs/config';
+import jwt, { SignOptions } from 'jsonwebtoken';
 const newUser: Pick<User, 'email' | 'password'> & {
   confirmPassword: string;
 } = {
@@ -17,53 +14,65 @@ const newUser: Pick<User, 'email' | 'password'> & {
   password: 'Rizzal123!',
   confirmPassword: 'Rizzal123!',
 };
+const usersServiceMock = mockDeep<UsersService>();
+const ConfigServiceMock = mockDeep<ConfigService>();
+
+// Libs
+jest.mock('jsonwebtoken', () => ({
+  sign: jest.fn(() => 'mocked-jwt-token'),
+}));
+
 describe('AuthService', () => {
   let service: AuthService;
-  let users: jest.Mocked<Repository<User>>;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
-      providers: [AuthService, LocalStrategy, JwtStrategy],
-      imports: [DatabaseModule, AppConfigModule],
+      providers: [
+        AuthService,
+        { provide: UsersService, useValue: usersServiceMock },
+        { provide: ConfigService, useValue: ConfigServiceMock },
+        {
+          provide: getRepositoryToken(User),
+          useValue: { findOneBy: jest.fn(), save: jest.fn() },
+        },
+      ],
       exports: [],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    users = module.get(getRepositoryToken(User));
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  // TODO: Add test on emailer after it is implemented
-  it('signup - should register a new user', async () => {
-    // Mock the users repository methods
-
-    const savedUser: User = {
-      ...newUser,
-      id: '2',
-      isEmailVerified: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      cronjobs: [],
+  it('login - should return a JWT token', () => {
+    const userPaylod = { id: '1', email: 'joserizal@philippines.com' };
+    // Mock the jwt.sign function to return a fixed token
+    const result = service.login(userPaylod);
+    const options: SignOptions = {
+      expiresIn: ConfigServiceMock.get('JWT_EXPIRES_IN'),
+      issuer: ConfigServiceMock.get('JWT_ISSUER'),
+      audience: ConfigServiceMock.get('JWT_AUDIENCE'),
     };
+    expect(jwt.sign).toHaveBeenCalledWith(
+      { sub: userPaylod.id, email: userPaylod.email },
+      ConfigServiceMock.get('JWT_SECRET'),
+      options,
+    );
+    expect(result).toEqual({
+      ...userPaylod,
+      accessToken: 'mocked-jwt-token',
+    });
+  });
 
-    jest.spyOn(users, 'findOneBy').mockResolvedValue(null);
-    jest.spyOn(users, 'create').mockReturnValue({
-      ...newUser,
-      id: '2',
-      isEmailVerified: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      cronjobs: [],
-    } as User);
-    jest.spyOn(users, 'save').mockResolvedValue(savedUser);
-    const result = await service.signup(newUser as SignUpDto);
+  // Simply test that it calls the function from userService
+  it('signup - should register a new user', async () => {
+    const signUpDto = newUser as SignUpDto;
+    await service.signup(signUpDto);
 
-    expect(result).toEqual(savedUser);
-
-    // Verfifies function call params
-    expect(users.findOneBy).toHaveBeenCalledWith({ email: newUser.email }); // eslint-disable-line
+    // checks the first argument of the first call to the create function of the user service
+    const args = usersServiceMock.create.mock.calls[0][0];
+    expect(args.email).toBe(signUpDto.email);
+    expect(args.password).toBe(signUpDto.password);
   });
 });
